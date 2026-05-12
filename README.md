@@ -18,6 +18,80 @@ This project demonstrates skills in:
 * Deployment (if applicable)
 
 ---
+🤖 AI Image Generation Pipeline
+
+AI Image Creation Pipeline
+For imagery, you’ve built a multi‑provider AI image generation pipeline that sits on top of the news layer and turns text‑only articles into visually rich cards:
+Here is a generated image with pipeline includes in the news thumbnail.
+<img width="1876" height="906" alt="image" src="https://github.com/user-attachments/assets/a97242a2-e24c-4037-93f2-3ec5b2abd39b" />
+
+Prompt Construction from Article Data
+
+For each article, you build a contextual prompt using the headline, summary, category, and sometimes location.
+
+Prompts are normalized (language, length, style) so different providers receive a consistent description.
+
+Primary Generation with Gemini Vision
+
+Gemini Vision is used as the primary image engine when available.
+
+It receives either the text prompt alone or a combination of text and existing thumbnails to perform image recreation / enhancement.
+
+The output is validated (dimensions, format, content) before being accepted.
+
+Three‑Tier Fallback Chain
+When the primary call fails (quota exceeded, timeout, validation failure), you automatically cascade through a three‑step fallback:
+
+Tier 1 – Pollinations: First backup provider for fast, prompt‑based generation.
+
+Tier 2 – DeepAI: Second fallback when Pollinations is unavailable or rate‑limited.
+
+Tier 3 – Craiyon: Final safety net to ensure you almost always get an image, even under heavy load.
+
+Each step checks for:
+
+HTTP/transport errors.
+
+Provider‑level error codes (including rate‑limit responses).
+
+Basic validity (non‑empty, decodable image data).
+
+Rate‑Limit Detection & Smart Retries
+
+You inspect status codes and response bodies to detect rate‑limit conditions.
+
+On rate‑limit detection, you skip to the next provider instead of hammering a failing endpoint.
+
+Optional backoff is used where appropriate to avoid cascading failure.
+
+Firebase Storage for Persistence
+
+Once an image is successfully generated, it is uploaded to Firebase Storage under a deterministic path (for example, keyed by article ID and provider).
+
+A lightweight metadata record (article ID, provider used, timestamp, URL) can be stored (e.g., Firestore or your own DB) so that:
+
+The same article never triggers regeneration unnecessarily.
+
+You can quickly switch providers in the future without migrating old data.
+
+Subsequent page loads read directly from Firebase URLs, eliminating repeat generation costs and latency.
+
+UI Integration
+
+Cards and article pages first check for a stored Firebase image.
+
+If not available, they trigger the pipeline in the background and display a graceful placeholder until the image is ready.
+
+Provider choice and fallback behavior are completely abstracted away from the UI; components receive a single, clean image URL.
+
+3️⃣ Rate-Limit Detection & Caching
+Implemented rate-limit monitoring
+Used Firebase storage for image caching
+Prevents unnecessary repeated API calls
+Reduces cost and improves performance
+Enhances scalability
+
+Cached images are reused when the same news content appears.
 
 ## 🎯 Features
 
